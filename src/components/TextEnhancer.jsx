@@ -1,5 +1,6 @@
 import { memo } from 'react';
-import Button from './Button';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 
 function TextEnhancer({ label, text, enhancedText, dispatch }) {
   return (
@@ -20,10 +21,9 @@ function TextEnhancer({ label, text, enhancedText, dispatch }) {
       />
       {enhancedText === '' ? (
         <Button
-          action={() => dispatch({ type: 'REQUEST_ENHANCE' })}
-          title="Enhance"
+          onClick={() => dispatch({ type: 'REQUEST_ENHANCE' })}
           style={{ alignSelf: 'end' }}
-        />
+        >Enhance</Button>
       ) : (
         <>
           <textarea
@@ -31,20 +31,19 @@ function TextEnhancer({ label, text, enhancedText, dispatch }) {
             value={enhancedText ? enhancedText : ''}
             readOnly
           />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
             <Button
-              action={() => dispatch({ type: 'DISCARD' })}
-              title="Discard"
-            />
+              onClick={() => dispatch({ type: 'DISCARD' })}
+             >"Discard"
+            </Button>
             <Button
-              action={() => dispatch({ type: 'REQUEST_ENHANCE' })}
-              title="Try again"
-            />
+              onClick={() => dispatch({ type: 'REQUEST_ENHANCE' })}
+              
+            >Try again</Button>
             <Button
-              action={() => dispatch({ type: 'USE_SUGGESTION' })}
-              title="Use text"
-            />
-          </div>
+              onClick={() => dispatch({ type: 'USE_SUGGESTION' })}
+            >Use text</Button>
+          </Stack>
         </>
       )}
     </div>
