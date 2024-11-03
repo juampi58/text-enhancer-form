@@ -1,9 +1,12 @@
 import TextEnhancer from './components/TextEnhancer';
-import { useCallback, useReducer } from 'react';
-import { getRandomElement } from './utils';
+import { useReducer } from 'react';
+import {enhanceText} from './services'
 const initialState = {
   text: '',
-  enhancedText: '',
+  enhancedTexts: [],
+  currentEnhancedIndex: 0,
+  waitingForRequest: false,
+  errorMessage: null
 };
 
 const formReducer = (state, action) => {
@@ -11,36 +14,53 @@ const formReducer = (state, action) => {
     case 'UPDATE_TEXTINPUT':
       return { ...state, text: action.value };
     case 'REQUEST_ENHANCE':
-      return {
-        enhancedText: fetchEnhancement(),
-      };
+      return { ...state, waitingForRequest:true}
+    case 'REQUEST_ENHANCE_SUCCESS':
+      return { ... state, enhancedTexts: [ ...state.enhancedTexts, action.value], waitingForRequest: false, currentEnhancedIndex: state.enhancedTexts.length }
+    case 'REQUEST_ENHANCE_FAIL':
+      return { ... state, errorMessage: action.value, waitingForRequest: false }
     case 'USE_SUGGESTION':
-      return { ...state, text: state.enhancedText, enhancedText: '' };
+      return { ...state, text: state.enhancedTexts[state.currentEnhancedIndex], enhancedTexts: [] };
     case 'DISCARD':
-      return { ...state, enhancedText: '' };
+      return { ...state, enhancedTexts: state.enhancedTexts.filter((_,index)=>action.value!==index), currentEnhancedIndex: action.value>0?action.value-1:0 };
+    case 'CHANGE_OPTION':
+      return {...state, currentEnhancedIndex: action.value}
     default:
       return state;
   }
 };
 
-const RESULT = ['Enhancment 1', 'Enhancment 2', 'Enhancment 3'];
 
-const fetchEnhancement = () => {
-  return getRandomElement(RESULT);
-};
 export default function CommentsPage() {
   const [form, dispatchForm] = useReducer(formReducer, initialState);
+  const requestEnhancedText = async(input) => {
+    dispatchForm({ type: 'REQUEST_ENHANCE'})
+    enhanceText(input).then(val=>{
+      console.log(val.choices)
+      dispatchForm({
+        type: 'REQUEST_ENHANCE_SUCCESS',
+        value: val.choices[0].text.replace(/[\n"]/g, '').trim()
+      });
+    }).catch(err=>{
+      dispatchForm({
+        type: 'REQUEST_ENHANCE_FAIL',
+        value: err.message.replace(/[\n"]/g, '').trim()
+      });
+    })
 
-  const requestEnhansment = useCallback(() =>
-    dispatchForm({ type: 'REQUEST_ENHANCE' })
-  );
+  }
+
   return (
     <>
       <TextEnhancer
         label="Textarea1"
         text={form.text}
-        enhancedText={form.enhancedText}
+        enhancedTexts={form.enhancedTexts}
+        requestEnhanced={requestEnhancedText}
         dispatch={dispatchForm}
+        currentOption={form.currentEnhancedIndex}
+        isLoading={form.waitingForRequest}
+        error={form.errorMessage}
       />
     </>
   );
